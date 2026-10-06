@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive-icon foreground: an engine-instrument arc with its red zone, around an airliner seen from above. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Instrument arc (normal range) -->
+    <path
+        android:pathData="M35.62,72.38 A26,26 0 1,1 79.9,51.73"
+        android:strokeWidth="3.6"
+        android:strokeColor="#4CC3F0"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Instrument arc (red zone) -->
+    <path
+        android:pathData="M79.9,51.73 A26,26 0 0,1 72.38,72.38"
+        android:strokeWidth="3.6"
+        android:strokeColor="#FF5A4F"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Aircraft -->
+    <path
+        android:fillColor="#EAF2FB"
+        android:pathData="M54,33 C55.6,33 56.4,35 56.4,37.5 L56.4,48.5 L73,58 L73,61 L56.4,56.5 L56.4,67.5 L62,71.5 L62,74 L54,72 L46,74 L46,71.5 L51.6,67.5 L51.6,56.5 L35,61 L35,58 L51.6,48.5 L51.6,37.5 C51.6,35 52.4,33 54,33 Z" />
+</vector>

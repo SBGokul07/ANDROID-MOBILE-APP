@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AeroMaintenance AI</string>
+    <string name="notification_channel_alerts">AI maintenance alerts</string>
+    <string name="notification_channel_alerts_desc">Alerts raised by the predictive-maintenance prototype</string>
+</resources>

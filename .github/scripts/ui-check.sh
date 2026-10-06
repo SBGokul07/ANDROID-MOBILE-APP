@@ -57,6 +57,7 @@ adb pull /sdcard/demo.mp4 "$OUT/demo.mp4" || true
 
 adb logcat -d > "$OUT/logcat.txt"
 if grep -E "FATAL EXCEPTION|AndroidRuntime: Process: $PKG" "$OUT/logcat.txt"; then
+  grep -A40 "FATAL EXCEPTION" "$OUT/logcat.txt" | head -120 > "$OUT/crash.txt"
   echo "App crashed during the UI check"
   exit 1
 fi

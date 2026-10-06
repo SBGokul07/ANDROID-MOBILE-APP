@@ -20,11 +20,20 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests (simulator + AI engine)
-        run: ./gradlew --no-daemon testDebugUnitTest
+      - name: Unit tests, API-level lint, debug and release APKs
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug assembleRelease 2>&1 | tee build.log
 
-      - name: Build debug and release APKs
-        run: ./gradlew --no-daemon assembleDebug assembleRelease
+      - name: Report build errors
+        if: failure()
+        run: |
+          # Surface compiler, resource, lint and test errors as a job annotation.
+          grep -E -A3 "error:|warning: \[|e: |AAPT|FAILED|What went wrong|Exception|expected:<|Error:|NewApi" build.log \
+            | head -150 > errors.txt || true
+          [ -s errors.txt ] || tail -80 build.log > errors.txt
+          [ -f app/build/reports/lint-results-debug.txt ] && head -80 app/build/reports/lint-results-debug.txt >> errors.txt
+          python3 -c "import sys; t=open('errors.txt').read()[:60000]; print('::error title=Build failed::' + t.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))"
 
       - name: Collect APKs
         run: |
@@ -41,8 +50,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: test-reports
-          path: app/build/reports/
+          name: build-reports
+          path: |
+            build.log
+            app/build/reports/
 
   ui-check:
     # Installs the release APK on an Android emulator, opens every screen,
@@ -73,6 +84,13 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: bash .github/scripts/ui-check.sh dist/AeroMaintenanceAI.apk
+
+      - name: Report crash
+        if: failure()
+        run: |
+          if [ -f ui-check/crash.txt ]; then
+            python3 -c "t=open('ui-check/crash.txt').read()[:60000]; print('::error title=App crashed::' + t.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))"
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -107,5 +125,5 @@ jobs:
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
             --prerelease \
-            --title "AeroMaintenance AI, build ${{ github.run_number }}" \
-            --notes "Install AeroMaintenanceAI.apk on an Android 8.0+ phone. Academic prototype using simulated data; not for operational use. UI check: ${{ needs.ui-check.result }}."
+            --title "AeroMaintenance AI (Java), build ${{ github.run_number }}" \
+            --notes "Native Android app written in Java. Install AeroMaintenanceAI.apk on an Android 8.0+ phone. Academic prototype using simulated data; not for operational use. UI check: ${{ needs.ui-check.result }}."

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="night_navy">#FF07101D</color>
+    <color name="panel_navy">#FF0E1B2E</color>
+    <color name="instrument_cyan">#FF4CC3F0</color>
     <color name="icon_background">#FF0B1A2E</color>
 </resources>

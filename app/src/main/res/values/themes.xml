@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Window theme only; all in-app styling is done in Compose (ui/theme). -->
+    <!-- Window theme. All in-app styling is done in Java (ui/Palette, ui/Type, ui/Ui). -->
     <style name="Theme.AeroMaintenance" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/night_navy</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@color/night_navy</item>
+        <item name="android:navigationBarColor">@color/panel_navy</item>
+        <item name="android:colorPrimary">@color/night_navy</item>
+        <item name="android:colorPrimaryDark">@color/night_navy</item>
+        <item name="android:colorAccent">@color/instrument_cyan</item>
     </style>
 </resources>

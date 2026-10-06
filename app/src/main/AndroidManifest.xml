@@ -12,12 +12,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AeroMaintenance">
 
+        <!-- Single activity; screens are Java classes swapped inside it (see ui/screens). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
             android:theme="@style/Theme.AeroMaintenance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

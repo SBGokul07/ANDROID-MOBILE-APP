@@ -79,3 +79,33 @@ jobs:
         with:
           name: ui-check
           path: ui-check/
+
+  publish:
+    # Attaches the APK, screenshots and demo recording to a GitHub pre-release,
+    # so the APK can be downloaded straight onto a phone.
+    needs: [build, ui-check]
+    if: ${{ always() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd artifacts
+          ls -R | head -60
+          FILES="apk/AeroMaintenanceAI.apk apk/AeroMaintenanceAI-debug.apk"
+          if [ -d ui-check ]; then
+            (cd ui-check && zip -qr ../screenshots.zip . -x demo.mp4)
+            FILES="$FILES screenshots.zip"
+            [ -f ui-check/demo.mp4 ] && FILES="$FILES ui-check/demo.mp4"
+          fi
+          gh release create "build-${{ github.run_number }}" $FILES \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --prerelease \
+            --title "AeroMaintenance AI, build ${{ github.run_number }}" \
+            --notes "Install AeroMaintenanceAI.apk on an Android 8.0+ phone. Academic prototype using simulated data; not for operational use. UI check: ${{ needs.ui-check.result }}."

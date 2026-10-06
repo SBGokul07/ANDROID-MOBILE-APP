@@ -85,7 +85,7 @@ public class AlertsScreen extends BaseScreen {
         // Clip the coloured strip to the rounded corners.
         panel.setClipToOutline(true);
 
-        LinearLayout row = new LinearLayout(ctx);
+        LinearLayout row = Ui.topRow(ctx);
         View strip = new View(ctx);
         strip.setBackgroundColor(a.acknowledged ? Palette.HAIRLINE : color);
         row.addView(strip, new LinearLayout.LayoutParams(dp(5), ViewGroup.LayoutParams.MATCH_PARENT));

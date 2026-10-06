@@ -50,6 +50,24 @@ public final class Ui {
         LinearLayout l = new LinearLayout(c);
         l.setOrientation(LinearLayout.HORIZONTAL);
         l.setGravity(Gravity.CENTER_VERTICAL);
+        l.setBaselineAligned(false);
+        return l;
+    }
+
+    /** Horizontal row whose children sit on its bottom edge (a big number next to its unit). */
+    public static LinearLayout bottomRow(Context c) {
+        LinearLayout l = new LinearLayout(c);
+        l.setOrientation(LinearLayout.HORIZONTAL);
+        l.setGravity(Gravity.BOTTOM);
+        l.setBaselineAligned(false);
+        return l;
+    }
+
+    /** Horizontal row with children aligned to its top edge. */
+    public static LinearLayout topRow(Context c) {
+        LinearLayout l = new LinearLayout(c);
+        l.setOrientation(LinearLayout.HORIZONTAL);
+        l.setBaselineAligned(false);
         return l;
     }
 
@@ -262,8 +280,7 @@ public final class Ui {
     }
 
     public static View bullet(Context c, String s, int dotColor, int textColor) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout row = topRow(c);
         row.setPadding(0, dp(c, 3), 0, dp(c, 3));
         View dot = dot(c, dotColor, 6);
         LinearLayout.LayoutParams dlp = size(c, 6, 6);
@@ -280,8 +297,7 @@ public final class Ui {
 
     /** Honest labelling, shown wherever the AI produces an output. */
     public static View prototypeNote(Context c, String s) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout row = topRow(c);
         row.setPadding(0, dp(c, 6), 0, dp(c, 6));
         ImageView i = icon(c, R.drawable.ic_info, Palette.TEXT_FAINT, 16);
         LinearLayout.LayoutParams ilp = size(c, 16, 16);

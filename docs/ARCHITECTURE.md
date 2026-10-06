@@ -4,17 +4,20 @@ This document covers the project architecture, what each major component does, t
 
 ## 1. Layers
 
+The app is written in Java against the Android SDK only. It follows a simple MVVM-style split: screens (views) read from one state object (the view model) and call its methods; the state object notifies the screens when something changes (observer pattern); the AI and the data simulator are plain Java with no Android code.
+
 ```
-┌──────────────────────── UI layer (Jetpack Compose, Material 3) ────────────────────────┐
-│  AeroApp: top bar · bottom navigation · drawer · demo narration panel                   │
-│  Screens: Dashboard, Aircraft, Detail, Monitoring, AI prediction, Maintenance, Alerts,  │
-│           Reports, AI insights, Faculty demo, About                                     │
-│  Components: InstrumentDial, TrendChart, ProjectionChart, RulRiskChart, PipelineStepper │
+┌──────────────────────── UI layer (Android SDK views, Canvas) ───────────────────────────┐
+│  MainActivity: TopBar · BottomNav · NavDrawer · DemoPanel · Snackbar · screen host      │
+│  Screens (ui/screens): Dashboard, Fleet, AircraftDetail, Monitoring, Analysis,          │
+│           Maintenance, Alerts, Reports, Insights, FacultyDemo, About  (extend BaseScreen)│
+│  Widgets (ui/widget): DialView, TrendChartView, ProjectionChartView, RiskChartView,     │
+│           PipelineStepperView, PanelView, ButtonView, BarView                           │
 └──────────────────────────────────────┬──────────────────────────────────────────────────┘
-                                       │ reads state / calls actions
-┌──────────────────────────────────────▼──────────────────────────────────────────────────┐
-│  AeroViewModel: navigation back stack, selected aircraft, data condition per aircraft,  │
-│  analysis state (Idle → Running(stage) → Done), alerts, work orders, report, demo steps │
+                     reads state, calls │ actions          ▲ onStateChanged(Change)
+┌──────────────────────────────────────▼───────────────────┴──────────────────────────────┐
+│  AppState: navigation back stack, selected aircraft, data condition per aircraft,       │
+│  analysis phase (IDLE → RUNNING(stage) → DONE), alerts, work orders, report, demo steps │
 └──────────────────────────────────────┬──────────────────────────────────────────────────┘
                                        │ calls (pure functions, deterministic)
 ┌──────────────────────────────────────▼──────────────────────────────────────────────────┐
@@ -22,35 +25,44 @@ This document covers the project architecture, what each major component does, t
 └──────────────────────────────────────┬──────────────────────────────────────────────────┘
                                        │ reads
 ┌──────────────────────────────────────▼──────────────────────────────────────────────────┐
-│  data/    FleetRepository (12 aircraft, work orders) · TelemetrySimulator · Models      │
+│  data/    FleetRepository (12 aircraft, work orders) · TelemetrySimulator · models      │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 Side effects: AlertNotifier → Android notifications; Reports → Android share sheet.
 ```
 
-The `data` and `engine` packages have no Android imports. That is deliberate: the AI pipeline is plain Kotlin, unit-tested on the JVM, and could be moved to a server or swapped for a TensorFlow Lite model without touching the UI.
+The `data` and `engine` packages have no Android imports. That is deliberate: the AI pipeline is plain Java, unit-tested on the JVM, and could be moved to a server or swapped for a TensorFlow Lite model without touching the UI.
+
+### How a screen is drawn
+
+Every screen extends `BaseScreen`. Its `build()` method creates views from the current `AppState` using the small toolkit in `ui/Ui.java` (text styles, panels, tags, buttons). When `AppState` reports a change the screen cares about, `BaseScreen.render()` builds the content again and keeps the scroll position. This is the same idea as a declarative UI (Compose, React) but written with plain views, which keeps it easy to follow. Parts that change many times a second update in place instead of rebuilding: the six live dials on the monitoring screen and the running pipeline on the AI screen.
+
+Timed behaviour (the stage-by-stage pipeline, report generation, the guided demo, live read-outs) runs on the main thread with `android.os.Handler.postDelayed`; animations use `ValueAnimator`. No background threads are needed because one full analysis takes a few milliseconds.
 
 ## 2. Major components
 
 | Component | Responsibility |
 |---|---|
-| `MainActivity` | Starts the Compose UI, creates the notification channel, applies optional intent extras (`screen`, `aircraft`, `condition`, `run_analysis`, `demo`, `report`, `tab`). |
-| `AeroViewModel` | Single source of truth. Holds the navigation back stack, selected aircraft, normal/abnormal choice per aircraft, analysis progress, alerts, work orders, report state and the guided-demo state machine. Caches telemetry and results (they are deterministic). At start-up it runs the engine on every aircraft to create the initial alerts and to set work-order due hours from the predicted RUL, so all screens agree. |
+| `MainActivity` | The only activity. Builds the shell (top bar, content area, demo panel, bottom navigation, drawer), swaps the screen when the destination changes (cross-fade), forwards state changes to the current screen, requests the notification permission, opens the share sheet, and applies optional intent extras (`screen`, `aircraft`, `condition`, `run_analysis`, `demo`, `report`, `tab`). |
+| `AppState` | Single source of truth (the "view model"). Holds the navigation back stack, selected aircraft, normal/abnormal choice per aircraft, analysis progress, alerts, work orders, report state and the guided-demo state machine. Caches telemetry and results (they are deterministic). At start-up it runs the engine on every aircraft to create the initial alerts and to set work-order due hours from the predicted RUL, so all screens agree. A process-wide singleton, so it survives activity re-creation. |
 | `DemoScript` | The ten demo steps with their durations and narration. Narration uses the live result, so the numbers spoken match the numbers on screen. |
 | `FleetRepository` | Twelve fictional aircraft (AERO-101 … AERO-112) with model, flight hours, cycles, health score, status, last maintenance, the fault each one develops in the abnormal data set, and the component-health records shown on the detail screen. |
 | `TelemetrySimulator` | Generates 120 hourly samples for six channels. Normal data is noise around the fleet baseline; abnormal data injects the aircraft's fault signature with a realistic degradation profile. Seeded, so every run is identical. |
+| `XorWowRandom` | The seeded random generator behind the simulator (Marsaglia's xorwow). It is bit-compatible with the generator the first, Kotlin version of the prototype used, so the Java app produces exactly the same telemetry, sample CSVs and demo numbers. |
 | `InferenceEngine` | The prototype AI pipeline (section 3). Returns an `AnalysisResult` with the anomaly score, risk, primary component, health, RUL, confidence, explanation, per-component assessments and a trace of every stage. |
 | `Recommendations` | Rule base mapping (component, risk) to predicted condition, recommendation text, short action (Inspect / Monitor / Normal) and work package. |
 | `AlertFactory` | Converts a result into an alert: HIGH → CRITICAL, MEDIUM with RUL under 150 h → WARNING, other MEDIUM → MONITOR, LOW → no alert. |
 | `ReportGenerator` | Builds the maintenance report and its plain-text version for sharing. |
 | `AlertNotifier` | Posts alerts as Android notifications (asks for permission on Android 13+). |
-| `InstrumentDial` | Glass-cockpit style gauge used for fleet health, anomaly score and the six live sensor read-outs. |
-| `TrendChart` | Sensor history with caution/warning bands, raw and smoothed traces coloured by zone, removed spikes, detected onset and a live point. |
-| `ProjectionChart` | Health-indicator history plus the magenta RUL projection to the failure limit. |
-| `RulRiskChart` | RUL per component against the HIGH (72 h) and MEDIUM (250 h) rules. |
+| `BaseScreen` | Base class of the eleven screens: scrolling container, rebuild-on-change, demo highlight and scroll-to-focus, "play this animation once" bookkeeping. |
+| `DialView` | Glass-cockpit style gauge drawn on a `Canvas`, used for fleet health, anomaly score, aircraft health and the six live sensor read-outs. |
+| `TrendChartView` | Sensor history with caution/warning bands, raw and smoothed traces coloured by zone, removed spikes, detected onset and a pulsing live point. |
+| `ProjectionChartView` | Health-indicator history plus the magenta RUL projection to the failure limit. |
+| `RiskChartView` | RUL per component against the HIGH (72 h) and MEDIUM (250 h) rules. |
+| `PipelineStepperView` | The nine pipeline stages with ticks, pulsing active stage and per-stage details. |
 
 ## 3. AI inference logic (Prototype / Simulated AI Inference)
 
-No trained neural network runs in the app. Each stage below is a transparent statistical method chosen to mirror what a production model does, so every number on screen can be traced. The constants live in `InferenceEngine.kt`.
+No trained neural network runs in the app. Each stage below is a transparent statistical method chosen to mirror what a production model does, so every number on screen can be traced. The constants live in `InferenceEngine.java`.
 
 ### 3.1 Data acquisition
 Six channels × 120 operating hours = 720 samples per analysis: engine temperature (EGT, °C), vibration (mm/s), oil pressure (PSI), core speed (RPM), fuel flow (kg/h) and hydraulic pressure (PSI).
@@ -152,5 +164,5 @@ Columns: `hour_offset` (−119 … 0, operating hours before now), `engine_temp_
 
 ## 5. Testing
 
-- `InferenceEngineTest` (JVM): the AERO-101 demo numbers, LOW risk on normal data for every aircraft, agreement between the fleet record and the engine, determinism, alert severity and report content.
-- CI (`.github/workflows/android.yml`): runs the tests, builds the debug and release APKs, then installs the release APK on an Android 14 emulator, opens every screen, takes screenshots, records the guided demo, and fails if the app crashes.
+- `InferenceEngineTest` (JUnit, plain JVM): the AERO-101 demo numbers, LOW risk on normal data for every aircraft, agreement between the fleet record and the engine, determinism, alert severity, report content and number formatting.
+- CI (`.github/workflows/android.yml`): runs the tests, runs Android lint for API-level problems (any call newer than Android 8.0 fails the build), builds the debug and release APKs, then installs the release APK on an Android 14 emulator, opens every screen, takes screenshots, records the guided demo, and fails if the app crashes. Each successful build is published as a pre-release with the APK, screenshots and demo video.

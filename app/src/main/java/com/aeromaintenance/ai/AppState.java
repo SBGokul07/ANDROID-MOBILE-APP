@@ -3,6 +3,7 @@ package com.aeromaintenance.ai;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import com.aeromaintenance.ai.data.Aircraft;
 import com.aeromaintenance.ai.data.Alert;
@@ -144,6 +145,7 @@ public final class AppState {
     private String demoFocus;
     private int demoToken;
     private long demoElapsed;
+    private long demoLastTick;
 
     private AppState(Context app) {
         this.app = app;
@@ -663,6 +665,7 @@ public final class AppState {
         performDemoAction(index, () -> {
             if (token != demoToken) return;
             demoElapsed = 0;
+            demoLastTick = SystemClock.uptimeMillis();
             tickDemo(token, index);
         });
     }
@@ -671,8 +674,12 @@ public final class AppState {
         handler.postDelayed(() -> {
             if (token != demoToken || demo == null) return;
             long duration = DemoScript.STEPS.get(index).durationMs;
+            long now = SystemClock.uptimeMillis();
+            // Count real time, so a busy phone does not stretch the demo.
+            long delta = Math.min(500, now - demoLastTick);
+            demoLastTick = now;
             if (!demo.paused) {
-                demoElapsed += 50;
+                demoElapsed += delta;
                 demo = new Demo(index, Math.min(1f, demoElapsed / (float) duration), false, false);
                 notifyChange(Change.DEMO_PROGRESS);
             }

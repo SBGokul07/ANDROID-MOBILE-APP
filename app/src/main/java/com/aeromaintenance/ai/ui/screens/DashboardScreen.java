@@ -75,8 +75,7 @@ public class DashboardScreen extends BaseScreen {
         dial.setValue(health, firstTime("fleet-dial"));
         LinearLayout readout = Ui.column(ctx);
         readout.setGravity(Gravity.CENTER_HORIZONTAL);
-        LinearLayout numbers = new LinearLayout(ctx);
-        numbers.setGravity(Gravity.BOTTOM);
+        LinearLayout numbers = Ui.bottomRow(ctx);
         numbers.addView(Ui.text(ctx, Integer.toString(health), Type.Style.READOUT, Palette.TEXT));
         TextView of = Ui.text(ctx, " / 100", Type.Style.READOUT_SMALL, Palette.TEXT_MUTED);
         of.setPadding(0, 0, 0, dp(6));
@@ -245,7 +244,7 @@ public class DashboardScreen extends BaseScreen {
     private View workflowStrip() {
         HorizontalScrollView scroll = new HorizontalScrollView(ctx);
         scroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout row = new LinearLayout(ctx);
+        LinearLayout row = Ui.topRow(ctx);
         row.setPadding(0, dp(4), 0, dp(4));
         for (int i = 0; i < WORKFLOW.length; i++) {
             LinearLayout item = Ui.column(ctx);

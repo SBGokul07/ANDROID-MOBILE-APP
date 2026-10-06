@@ -108,7 +108,7 @@ public class ReportsScreen extends BaseScreen {
         doc.setBackground(Ui.rounded(ctx, Palette.PAPER, 6, 0, 0));
         doc.setPadding(dp(18), dp(18), dp(18), dp(18));
 
-        LinearLayout head = new LinearLayout(ctx);
+        LinearLayout head = Ui.topRow(ctx);
         LinearLayout titles = Ui.column(ctx);
         titles.addView(Ui.text(ctx, "AeroMaintenance AI", Type.Style.LABEL_MEDIUM, Palette.INK_MUTED));
         titles.addView(Ui.text(ctx, "Predictive Maintenance Report", Type.Style.HEADLINE_SMALL, Palette.INK));
@@ -149,7 +149,7 @@ public class ReportsScreen extends BaseScreen {
         }
 
         section(doc, "Sensor evidence");
-        LinearLayout ehead = new LinearLayout(ctx);
+        LinearLayout ehead = Ui.topRow(ctx);
         ehead.setPadding(0, dp(4), 0, dp(4));
         paperHead(ehead, "Channel", 1.5f);
         paperHead(ehead, "Baseline", 1f);
@@ -158,7 +158,7 @@ public class ReportsScreen extends BaseScreen {
         doc.addView(ehead, Ui.matchWrap());
         for (EvidenceRow e : r.evidence) {
             doc.addView(Ui.divider(ctx, Palette.PAPER_RULE));
-            LinearLayout row = new LinearLayout(ctx);
+            LinearLayout row = Ui.topRow(ctx);
             row.setPadding(0, dp(5), 0, dp(5));
             int c = e.flagged ? Palette.PAPER_RED : Palette.INK;
             row.addView(evidenceCell(e.sensor.shortLabel + " (" + e.sensor.unit + ")", c, e.flagged), Ui.weight(1.5f));
@@ -201,7 +201,7 @@ public class ReportsScreen extends BaseScreen {
     }
 
     private void paperRow(LinearLayout doc, String label, String value, int valueColor, boolean bold) {
-        LinearLayout row = new LinearLayout(ctx);
+        LinearLayout row = Ui.topRow(ctx);
         row.setPadding(0, dp(3), 0, dp(3));
         row.addView(Ui.text(ctx, label, Type.Style.BODY_MEDIUM, Palette.INK_MUTED), Ui.weight(1f));
         TextView v = Ui.text(ctx, value, Type.Style.BODY_MEDIUM, valueColor);

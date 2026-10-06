@@ -70,15 +70,25 @@ public abstract class BaseScreen {
     /** Adds this screen's content to {@link #content}. */
     protected abstract void build();
 
-    /** Rebuilds the content and keeps the scroll position. */
+    /**
+     * Rebuilds the content. Keeps the scroll position, unless the guided demo has
+     * moved on to a new part of the screen, in which case it scrolls there.
+     */
     public final void render() {
         final int y = scroll.getScrollY();
+        boolean firstRender = !rendered;
+        String previousFocus = renderedFocus;
         focusTargets.clear();
         content.removeAllViews();
         renderedFocus = state.demoFocus();
         build();
-        if (y > 0) scroll.post(() -> scroll.scrollTo(0, y));
+        rendered = true;
+        boolean focusMoved = !firstRender && renderedFocus != null && !renderedFocus.equals(previousFocus);
+        if (focusMoved) scrollToFocus();
+        else if (y > 0) scroll.post(() -> scroll.scrollTo(0, y));
     }
+
+    private boolean rendered;
 
     /** Which state changes require this screen to rebuild. */
     protected boolean rendersOn(AppState.Change change) {
@@ -97,10 +107,8 @@ public abstract class BaseScreen {
 
     public void onStateChanged(AppState.Change change) {
         if (change == AppState.Change.DEMO) {
-            if (!Objects.equals(renderedFocus, state.demoFocus())) {
-                render();
-                scrollToFocus();
-            }
+            // render() scrolls to the new focus itself.
+            if (!Objects.equals(renderedFocus, state.demoFocus())) render();
             return;
         }
         if (rendersOn(change)) render();

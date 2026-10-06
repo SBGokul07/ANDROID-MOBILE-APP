@@ -197,7 +197,7 @@ public class AnalysisScreen extends BaseScreen {
         int color = Palette.risk(r.risk);
         PanelView p = new PanelView(ctx);
         p.setHighlighted(isFocused("risk"));
-        LinearLayout top = new LinearLayout(ctx);
+        LinearLayout top = Ui.topRow(ctx);
         LinearLayout left = Ui.column(ctx);
         left.addView(Ui.text(ctx, "Failure risk", Type.Style.LABEL_MEDIUM, Palette.TEXT_MUTED));
         left.addView(Ui.text(ctx, r.risk.label, Type.Style.READOUT, color));
@@ -238,8 +238,7 @@ public class AnalysisScreen extends BaseScreen {
         PanelView panel = new PanelView(ctx);
         panel.setHighlighted(isFocused("rul"));
         panel.addView(Ui.text(ctx, "Estimated remaining useful life", Type.Style.LABEL_MEDIUM, Palette.TEXT_MUTED));
-        LinearLayout row = new LinearLayout(ctx);
-        row.setGravity(Gravity.BOTTOM);
+        LinearLayout row = Ui.bottomRow(ctx);
         row.addView(Ui.text(ctx, p.rulHours >= 999 ? "999+" : Integer.toString(p.rulHours), Type.Style.READOUT, Palette.MAGENTA));
         row.addView(Ui.hspace(ctx, 8));
         TextView unit = Ui.text(ctx, "operating hours", Type.Style.TITLE_MEDIUM, Palette.TEXT);

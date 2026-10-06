@@ -213,7 +213,7 @@ public class MaintenanceScreen extends BaseScreen {
         int statusColor = Palette.taskStatus(t.status);
         PanelView p = new PanelView(ctx).setAccent(t.updatedByAiAt != null ? Palette.MAGENTA : null);
         p.setHighlighted(isFocused("task") && t.id.equals(state.highlightedTaskId()));
-        LinearLayout top = new LinearLayout(ctx);
+        LinearLayout top = Ui.topRow(ctx);
         LinearLayout col = Ui.column(ctx);
         col.addView(Ui.text(ctx, t.aircraftId, Type.Style.LABEL_LARGE, Palette.CYAN));
         col.addView(Ui.text(ctx, t.title, Type.Style.TITLE_MEDIUM, Palette.TEXT));
@@ -223,8 +223,7 @@ public class MaintenanceScreen extends BaseScreen {
         p.addView(top, Ui.matchWrap());
 
         if (t.status != TaskStatus.COMPLETED) {
-            LinearLayout due = new LinearLayout(ctx);
-            due.setGravity(Gravity.BOTTOM);
+            LinearLayout due = Ui.bottomRow(ctx);
             TextView dueIn = Ui.text(ctx, "Due in", Type.Style.BODY_SMALL, Palette.TEXT_MUTED);
             dueIn.setPadding(0, 0, 0, dp(4));
             due.addView(dueIn);

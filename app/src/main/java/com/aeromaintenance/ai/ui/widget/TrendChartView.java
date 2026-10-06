@@ -176,10 +176,20 @@ public class TrendChartView extends ChartView {
             c.drawCircle(lx, ly, dp(4) + dp(10) * t, fill);
             fill.setColor(color);
             c.drawCircle(lx, ly, dp(4), fill);
-            // Keep the live point pulsing at ~25 fps while the chart is on screen.
-            postInvalidateDelayed(40);
+            // Keep the live point pulsing at ~15 fps while the chart is on screen
+            // (at most one pending redraw, however often the chart is drawn).
+            if (!pulseScheduled) {
+                pulseScheduled = true;
+                postDelayed(pulseTick, 66);
+            }
         }
     }
+
+    private boolean pulseScheduled;
+    private final Runnable pulseTick = () -> {
+        pulseScheduled = false;
+        invalidate();
+    };
 
     @Override
     protected void onAttachedToWindow() {
@@ -191,6 +201,8 @@ public class TrendChartView extends ChartView {
     protected void onDetachedFromWindow() {
         if (revealAnimator != null) revealAnimator.cancel();
         reveal = 1f;
+        removeCallbacks(pulseTick);
+        pulseScheduled = false;
         super.onDetachedFromWindow();
     }
 }

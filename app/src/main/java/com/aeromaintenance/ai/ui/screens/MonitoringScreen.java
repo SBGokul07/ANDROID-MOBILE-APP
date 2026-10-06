@@ -148,7 +148,7 @@ public class MonitoringScreen extends BaseScreen {
         SensorType[] all = SensorType.values();
         boolean sweep = firstTime("tiles");
         for (int r = 0; r < 2; r++) {
-            LinearLayout row = new LinearLayout(ctx);
+            LinearLayout row = Ui.topRow(ctx);
             for (int k = 0; k < 3; k++) {
                 SensorType s = all[r * 3 + k];
                 row.addView(instrumentTile(s, sweep), Ui.weight(1f));

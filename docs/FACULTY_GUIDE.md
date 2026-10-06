@@ -35,7 +35,7 @@ When the demo ends, tap **Generate report** to show the formatted maintenance re
 
 > Aircraft components rarely fail without warning. Bearings vibrate more, turbines run hotter, pumps pulse. The problem is that maintenance is mostly scheduled by fixed intervals, so a part that wears faster than expected can be missed, and that means delays, downtime and operational risk.
 >
-> AeroMaintenance AI is an Android prototype of AI-assisted predictive maintenance. It takes aircraft telemetry, six sensor channels such as engine temperature, vibration and hydraulic pressure, and runs it through a pipeline: preprocessing to remove sensor glitches, feature extraction, a model of normal behaviour, anomaly detection, component health assessment, failure-risk prediction, and remaining-useful-life estimation. The result is a concrete recommendation, an alert on the engineer's phone, and a work order in the maintenance plan.
+> AeroMaintenance AI is a native Android prototype of AI-assisted predictive maintenance, written in Java. It takes aircraft telemetry, six sensor channels such as engine temperature, vibration and hydraulic pressure, and runs it through a pipeline: preprocessing to remove sensor glitches, feature extraction, a model of normal behaviour, anomaly detection, component health assessment, failure-risk prediction, and remaining-useful-life estimation. The result is a concrete recommendation, an alert on the engineer's phone, and a work order in the maintenance plan.
 >
 > In the demo, aircraft AERO-101 shows rising vibration. The app gives an anomaly score of 0.91, high risk on the engine bearing, and estimates 42 operating hours before vibration reaches its limit, so it recommends inspecting the bearing at the next maintenance window.
 >
@@ -115,25 +115,31 @@ Spike removal, smoothing, requiring a sustained trend rather than a single readi
 **Q15. Why Android and why on-device?**
 Engineers work on the hangar floor. On-device inference works offline, responds instantly, and keeps data on the device. A production version could still sync with a central maintenance system.
 
-**Q16. Why Kotlin and Jetpack Compose?**
-They are Google's recommended stack for modern Android. Compose let us draw custom instrument dials and charts directly on a canvas without a third-party chart library.
+**Q16. Why Java, and why no libraries?**
+Java is a first-class Android language, widely taught, and every line of the app can be read and explained without learning a second language. The app uses only the Android SDK: standard views for layout and `android.graphics.Canvas` for the dials and charts. No chart library, no AndroidX, no Kotlin or Jetpack Compose (Compose only works with Kotlin). That keeps the APK small, the build simple, and nothing hidden in a third-party dependency.
 
 **Q17. How is the app structured?**
-UI layer (Compose screens), a ViewModel that holds all state, an engine package with the AI pipeline, and a data package with the simulator. The engine and data packages have no Android dependencies, so they are unit-tested on the JVM and could be replaced by a TensorFlow Lite model without touching the UI.
+MVVM with the observer pattern. One activity (`MainActivity`) hosts the shell and the current screen. Eleven screen classes extend `BaseScreen` and build their views from `AppState`, the single source of truth (navigation, selected aircraft, analysis, alerts, work orders, demo). When `AppState` changes it notifies the screen, which rebuilds. The `engine` package holds the AI pipeline and the `data` package the simulator; neither imports Android, so they are unit-tested on the JVM and could be replaced by a TensorFlow Lite model without touching the UI.
 
-**Q18. Can this be used on real aircraft?**
+**Q18. How did you draw the charts and gauges without a library?**
+Each is a custom `View` subclass that overrides `onDraw(Canvas)`. For example `DialView` draws three coloured range arcs with `drawArc`, the value arc, tick marks with `drawLine` and a needle at the angle of the value; a `ValueAnimator` moves the needle. `TrendChartView` maps each sample to x/y pixels, shades the caution and warning bands, draws the raw trace with a `Path` and the smoothed trace segment by segment in the colour of its zone.
+
+**Q19. How do the animations and the timed demo work?**
+`android.os.Handler.postDelayed` schedules each pipeline stage and each demo step on the main thread, and `ValueAnimator` animates needles and bars. A token number cancels stale timers when the user changes aircraft or skips a demo step.
+
+**Q20. Can this be used on real aircraft?**
 No. It is an academic prototype with simulated data and uncertified thresholds. Real use would need real data, validated models, regulatory approval and integration with approved maintenance procedures.
 
-**Q19. What happens when you switch to normal data?**
+**Q21. What happens when you switch to normal data?**
 The deviation drops to 0.2σ, the anomaly score to 0.08, risk to LOW, and the recommendation becomes "No action required. Continue routine condition monitoring." That contrast shows the model is reacting to the data, not to fixed values.
 
-**Q20. What was the hardest part?**
+**Q22. What was the hardest part?**
 Making the pipeline consistent end to end: the same result drives the dashboard, the detail page, the AI screen, the alert, the work order and the report. The app computes every screen from one engine run instead of storing numbers separately, and the unit tests check that the fleet record agrees with the engine.
 
-**Q21. How did you test it?**
+**Q23. How did you test it?**
 JVM unit tests on the engine, and a CI pipeline that builds the APK, installs it on an Android emulator, opens every screen, records the guided demo and fails if the app crashes.
 
-**Q22. What is the role of CUSUM?**
+**Q24. What is the role of CUSUM?**
 Cumulative sum is a classic change-point method. It accumulates deviations above a small allowance and signals when the sum crosses a threshold. The point where it last left zero estimates when degradation began (about 73 hours ago for AERO-101).
 
 ---

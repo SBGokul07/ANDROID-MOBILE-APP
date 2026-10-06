@@ -1,6 +1,6 @@
 # AeroMaintenance AI
 
-An AI-assisted predictive-maintenance prototype for aircraft health monitoring and component risk assessment, built as a native Android app (Kotlin, Jetpack Compose, Material 3).
+An AI-assisted predictive-maintenance prototype for aircraft health monitoring and component risk assessment, built as a native Android app in **Java** using only the Android SDK (no Kotlin, no third-party libraries).
 
 > **Important.** This application is an academic research prototype using simulated/synthetic data. It is not certified for real-world aviation safety, maintenance, or flight-critical decision-making. The AI shown is **Prototype / Simulated AI Inference**: a transparent statistical pipeline standing in for a trained neural network.
 
@@ -19,23 +19,23 @@ For the headline case (aircraft **AERO-101**, abnormal data) the engine computes
 
 ### On a phone (quickest)
 
-1. Download `AeroMaintenanceAI.apk` (the release build) from this repository's **Releases** page, or from the `apk` artifact of the latest **Build APK** run under the **Actions** tab.
+1. Download `AeroMaintenanceAI.apk` (the release build) from this repository's **Releases** page (the newest "AeroMaintenance AI (Java)" pre-release), or from the `apk` artifact of the latest **Build APK** run under the **Actions** tab.
 2. Open it on the phone. Android asks to allow installs from that source the first time; allow it.
 3. Launch **AeroMaintenance AI**. Requires Android 8.0 or later; works fully offline.
 4. When you tap **Start demo** the app asks for notification permission (Android 13+). Allow it so the AI alert also shows up as a phone notification.
 
-The release APK is signed with a demo key that is committed in the repo (`app/aero-demo.jks`), so a newer build installs over an older one. That key is public, which is fine for a classroom prototype and not for anything published to a store.
+The release APK is signed with a demo key that is committed in the repo (`app/aero-demo.jks`), so a newer build installs over an older one (including the earlier Kotlin build). That key is public, which is fine for a classroom prototype and not for anything published to a store.
 
 ### In Android Studio
 
-1. **File → Open** and choose this folder. Let Gradle sync (it downloads the Android Gradle Plugin 8.5, Kotlin 2.0 and Compose).
-2. Pick an emulator or a USB-connected phone and press **Run**.
-3. For a smooth live demo, run the **release** variant (Build Variants panel → `release`). Debug builds of Compose are noticeably slower.
+1. Install Android Studio (Hedgehog or newer) with Android SDK 34 and JDK 17.
+2. **File → Open** and choose this folder. Gradle sync downloads only the Android Gradle Plugin 8.5 (and JUnit for tests); the app itself has no library dependencies.
+3. Pick an emulator or a USB-connected phone and press **Run**.
 
 ### From the command line
 
 ```bash
-./gradlew testDebugUnitTest      # AI engine tests
+./gradlew testDebugUnitTest      # AI engine unit tests (plain JVM)
 ./gradlew assembleRelease        # app/build/outputs/apk/release/app-release.apk
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
@@ -76,40 +76,45 @@ adb shell am start -n com.aeromaintenance.ai/.MainActivity --ez demo true
 ```
 .
 ├── app/
-│   ├── build.gradle.kts                 Android module: SDK levels, Compose, signing
-│   ├── aero-demo.jks                    demo signing key (public on purpose)
+│   ├── build.gradle.kts                    Android module: SDK levels, signing, lint, JUnit
+│   ├── aero-demo.jks                       demo signing key (public on purpose)
 │   └── src/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── java/com/aeromaintenance/ai/
-│       │   │   ├── MainActivity.kt          entry point, deep-link extras
-│       │   │   ├── AeroViewModel.kt         app state: navigation, analysis, alerts, work orders, reports, demo
-│       │   │   ├── Screen.kt                destinations
-│       │   │   ├── DemoScript.kt            the ten demo steps and their narration
-│       │   │   ├── data/                    pure Kotlin, no Android dependencies
-│       │   │   │   ├── Models.kt            sensors, limits, aircraft, alerts, work orders
-│       │   │   │   ├── FleetRepository.kt   the 12 simulated aircraft and initial work orders
-│       │   │   │   └── TelemetrySimulator.kt  deterministic normal / abnormal telemetry
-│       │   │   ├── engine/                  pure Kotlin "AI" pipeline
-│       │   │   │   ├── InferenceEngine.kt   preprocessing → features → anomaly → health → risk → RUL
-│       │   │   │   ├── Recommendations.kt   rule base: condition, recommendation, work package
-│       │   │   │   ├── AlertFactory.kt      result → alert
-│       │   │   │   └── ReportGenerator.kt   result → maintenance report
-│       │   │   ├── notify/AlertNotifier.kt  Android notifications
+│       │   │   ├── MainActivity.java       the only activity: app shell, screen switching, deep links
+│       │   │   ├── AppState.java           single source of truth: navigation, selection, analysis,
+│       │   │   │                           alerts, work orders, report, guided demo (observer pattern)
+│       │   │   ├── Screen.java, Destination.java   screens and back-stack entries
+│       │   │   ├── DemoScript.java         the ten demo steps and their narration
+│       │   │   ├── LaunchOptions.java      intent extras for deep links and CI screenshots
+│       │   │   ├── data/                   plain Java, no Android imports
+│       │   │   │   ├── SensorType, ComponentType, FaultMode, RiskLevel, …   domain enums
+│       │   │   │   ├── Aircraft, Alert, MaintenanceTask, TelemetryWindow     immutable models
+│       │   │   │   ├── FleetRepository     the 12 simulated aircraft and initial work orders
+│       │   │   │   ├── TelemetrySimulator  deterministic normal / abnormal telemetry
+│       │   │   │   └── XorWowRandom        seedable random generator (repeatable demo)
+│       │   │   ├── engine/                 plain Java "AI" pipeline
+│       │   │   │   ├── InferenceEngine     preprocessing → features → anomaly → health → risk → RUL
+│       │   │   │   ├── Recommendations     rule base: condition, recommendation, work package
+│       │   │   │   ├── AlertFactory        result → alert
+│       │   │   │   └── ReportGenerator     result → maintenance report
+│       │   │   ├── notify/AlertNotifier    Android notifications
 │       │   │   └── ui/
-│       │   │       ├── AeroApp.kt           scaffold, top bar, bottom navigation, drawer, demo panel
-│       │   │       ├── components/          instrument dial, trend chart, RUL projection, risk chart, pipeline, common widgets
-│       │   │       ├── screens/             one file per screen
-│       │   │       └── theme/               colours, Barlow typography
-│       │   └── res/                         icon, fonts, strings
-│       └── test/.../InferenceEngineTest.kt  locks in the demo numbers and fleet consistency
+│       │   │       ├── Palette, Type, Ui, Controls   colours, Barlow type scale, view toolkit
+│       │   │       ├── widget/             Canvas views: DialView, TrendChartView, ProjectionChartView,
+│       │   │       │                       RiskChartView, PipelineStepperView, PanelView, ButtonView, …
+│       │   │       ├── shell/              TopBar, BottomNav, NavDrawer, DemoPanel, Snackbar
+│       │   │       └── screens/            BaseScreen + one class per screen (11)
+│       │   └── res/                        launcher icon, Material icons, Barlow fonts, strings, theme
+│       └── test/.../InferenceEngineTest.java   locks in the demo numbers and fleet consistency
 ├── docs/
-│   ├── ARCHITECTURE.md                  architecture, components, AI inference logic, dataset
-│   ├── FACULTY_GUIDE.md                 demo workflow, 2- and 5-minute talks, viva Q&A, roadmap
-│   └── sample-data/                     CSV exports of the simulated telemetry
+│   ├── ARCHITECTURE.md                     architecture, components, AI inference logic, dataset
+│   ├── FACULTY_GUIDE.md                    demo workflow, 2- and 5-minute talks, viva Q&A, roadmap
+│   └── sample-data/                        CSV exports of the simulated telemetry
 └── .github/
-    ├── workflows/android.yml            CI: tests, APK build, emulator run of every screen
-    └── scripts/ui-check.sh              screenshot and demo-recording script
+    ├── workflows/android.yml               CI: tests, lint, APK build, emulator run of every screen
+    └── scripts/ui-check.sh                 screenshot and demo-recording script
 ```
 
 ---
@@ -121,6 +126,6 @@ adb shell am start -n com.aeromaintenance.ai/.MainActivity --ez demo true
 
 ## 5. Tech stack
 
-Kotlin 2.0 · Jetpack Compose (BOM 2024.09) · Material 3 · AndroidX ViewModel · Android Gradle Plugin 8.5 · min SDK 26, target SDK 34 · JUnit 4. No network access, no backend, no third-party chart library: every chart and dial is drawn with Compose Canvas.
+Java 17 language level · Android SDK only (framework views, `Canvas`, `ValueAnimator`, `Handler`, `Notification`) · Android Gradle Plugin 8.5 · min SDK 26 (Android 8.0), target SDK 34 · JUnit 4 for unit tests. No Kotlin, no Jetpack Compose, no AndroidX, no chart library, no network access, no backend: every dial and chart is drawn with `android.graphics.Canvas`.
 
-Typeface: Barlow by Jeremy Tribby, SIL Open Font License (see `docs/FONT_LICENSE_OFL.txt`).
+Typeface: Barlow by Jeremy Tribby, SIL Open Font License (see `docs/FONT_LICENSE_OFL.txt`). Icons: Material Icons by Google, Apache License 2.0.

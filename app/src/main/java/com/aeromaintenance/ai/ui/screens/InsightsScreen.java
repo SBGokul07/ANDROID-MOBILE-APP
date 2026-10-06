@@ -73,7 +73,7 @@ public class InsightsScreen extends BaseScreen {
         add(Ui.sectionHeader(ctx, "Architecture", "Grey: the concept. Cyan: how this prototype implements it."));
         PanelView arch = new PanelView(ctx, 14);
         for (int i = 0; i < ARCHITECTURE.length; i++) {
-            LinearLayout row = new LinearLayout(ctx);
+            LinearLayout row = Ui.topRow(ctx);
             LinearLayout rail = Ui.column(ctx);
             rail.setGravity(Gravity.CENTER_HORIZONTAL);
             TextView num = Ui.text(ctx, Integer.toString(i + 1), Type.Style.TAG, Palette.CYAN);
@@ -104,7 +104,7 @@ public class InsightsScreen extends BaseScreen {
         PanelView models = new PanelView(ctx, 0);
         for (int i = 0; i < PRODUCTION_MODELS.length; i++) {
             if (i > 0) models.addView(Ui.divider(ctx, Palette.HAIRLINE));
-            LinearLayout row = new LinearLayout(ctx);
+            LinearLayout row = Ui.topRow(ctx);
             row.setPadding(dp(16), dp(12), dp(16), dp(12));
             row.addView(Ui.text(ctx, PRODUCTION_MODELS[i][0], Type.Style.TITLE_SMALL, Palette.MAGENTA), Ui.width(ctx, 96));
             row.addView(Ui.text(ctx, PRODUCTION_MODELS[i][1], Type.Style.BODY_SMALL, Palette.TEXT_MUTED), Ui.weight(1f));
@@ -136,7 +136,7 @@ public class InsightsScreen extends BaseScreen {
     }
 
     private void param(LinearLayout panel, String k, String v) {
-        LinearLayout row = new LinearLayout(ctx);
+        LinearLayout row = Ui.topRow(ctx);
         row.setPadding(0, dp(4), 0, dp(4));
         row.addView(Ui.text(ctx, k, Type.Style.BODY_MEDIUM, Palette.TEXT_MUTED), Ui.weight(1f));
         row.addView(Ui.text(ctx, v, Type.Style.NUMERIC, Palette.TEXT));

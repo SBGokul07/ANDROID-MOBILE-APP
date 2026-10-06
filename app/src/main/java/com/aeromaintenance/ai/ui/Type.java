@@ -33,7 +33,7 @@ public final class Type {
         LABEL_MEDIUM(R.font.barlow_medium, 13, 16, 0f, false),
         LABEL_SMALL(R.font.barlow_medium, 12, 15, 0f, false),
         /** Large numeric read-out (fleet health, risk, RUL). */
-        READOUT(R.font.barlow_semicondensed_semibold, 48, 50, -0.01f, true),
+        READOUT(R.font.barlow_semicondensed_semibold, 48, 50, 0f, true),
         READOUT_MEDIUM(R.font.barlow_semicondensed_semibold, 30, 34, 0f, true),
         READOUT_SMALL(R.font.barlow_semicondensed_semibold, 20, 24, 0f, true),
         /** Severity and risk tags: HIGH, CRITICAL, NORMAL… */
@@ -71,6 +71,20 @@ public final class Type {
         return t;
     }
 
+    /** Read-outs, tags and numbers are always one line. */
+    public static boolean isSingleLine(Style style) {
+        switch (style) {
+            case READOUT:
+            case READOUT_MEDIUM:
+            case READOUT_SMALL:
+            case TAG:
+            case NUMERIC:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public static void apply(TextView tv, Style style) {
         Context c = tv.getContext();
         tv.setTypeface(font(c, style.font));
@@ -78,6 +92,11 @@ public final class Type {
         tv.setLetterSpacing(style.letterSpacingEm);
         tv.setFontFeatureSettings(style.tabular ? "tnum" : null);
         tv.setIncludeFontPadding(false);
+        if (isSingleLine(style)) {
+            // Natural font height, never wrapped: large digits must not be split or clipped.
+            tv.setSingleLine(true);
+            return;
+        }
         int lineHeight = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
                 style.lineHeightSp, c.getResources().getDisplayMetrics()));
         if (Build.VERSION.SDK_INT >= 28) {

@@ -85,7 +85,7 @@ public class FacultyDemoScreen extends BaseScreen {
                 Type.Style.BODY_SMALL, Palette.TEXT_MUTED));
         script.addView(Ui.vspace(ctx, 10));
         for (int i = 0; i < DemoScript.STEPS.size(); i++) {
-            LinearLayout row = new LinearLayout(ctx);
+            LinearLayout row = Ui.topRow(ctx);
             row.setPadding(0, dp(3), 0, dp(3));
             row.addView(Ui.text(ctx, Integer.toString(i + 1), Type.Style.NUMERIC, Palette.CYAN), Ui.width(ctx, 24));
             row.addView(Ui.text(ctx, DemoScript.STEPS.get(i).title, Type.Style.BODY_MEDIUM, Palette.TEXT), Ui.weight(1f));

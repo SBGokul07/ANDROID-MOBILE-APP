@@ -80,7 +80,9 @@ public class DashboardScreen extends BaseScreen {
         TextView of = Ui.text(ctx, " / 100", Type.Style.READOUT_SMALL, Palette.TEXT_MUTED);
         of.setPadding(0, 0, 0, dp(6));
         numbers.addView(of);
-        readout.addView(numbers);
+        // Children of a wrap-content column need wrap-content widths, or the column
+        // sizes itself to the narrowest sibling (the tag) and clips the number.
+        readout.addView(numbers, Ui.wrap());
         int hc = health >= 80 ? Palette.GREEN : health >= 60 ? Palette.ORANGE : Palette.RED;
         LinearLayout.LayoutParams tlp = Ui.wrap();
         tlp.topMargin = dp(2);
@@ -178,7 +180,8 @@ public class DashboardScreen extends BaseScreen {
             row.addView(col, Ui.weight(1f));
             LinearLayout right = Ui.column(ctx);
             right.setGravity(Gravity.END);
-            right.addView(Ui.text(ctx, "RUL " + InferenceEngine.rulText(r.primary.rulHours), Type.Style.NUMERIC, Palette.risk(r.risk)));
+            right.addView(Ui.text(ctx, "RUL " + InferenceEngine.rulText(r.primary.rulHours), Type.Style.NUMERIC,
+                    Palette.risk(r.risk)), Ui.wrap());
             LinearLayout.LayoutParams rtlp = Ui.wrap();
             rtlp.topMargin = dp(3);
             right.addView(Ui.tag(ctx, r.risk.label, Palette.risk(r.risk)), rtlp);
